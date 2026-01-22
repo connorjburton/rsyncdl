@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+###
+# Arguments
+###
+TYPE="${1:-}"
+QUERY="${2:-}"
+
+###
+# Environment (with sane defaults)
+###
+REMOTE_USER="${REMOTE_USER:-user}"
+REMOTE_HOST="${REMOTE_HOST:-your.remote.host}"
+REMOTE_BASE="${REMOTE_BASE:-~/media}"
+SSH_KEY_FILE="${SSH_KEY_FILE:-id_ed25519}"
+
+LOCAL_BASE="/data"
+PARTIAL_DIR="$LOCAL_BASE/.rsync-partial"
+
+###
+# Validation
+###
+if [[ -z "$TYPE" || -z "$QUERY" ]]; then
+  echo 'Usage: sshdl {tv|movies} "Title"'
+  exit 1
+fi
+
+if [[ "$TYPE" != "tv" && "$TYPE" != "movies" ]]; then
+  echo "First argument must be: tv or movies"
+  exit 1
+fi
+
+SSH_KEY_PATH="/config/$SSH_KEY_FILE"
+
+if [[ ! -f "$SSH_KEY_PATH" ]]; then
+  echo "SSH key not found: $SSH_KEY_PATH"
+  exit 10
+fi
+
+###
+# Paths
+###
+REMOTE_DIR="$REMOTE_BASE/$TYPE"
+LOCAL_DIR="$LOCAL_BASE/$TYPE"
+
+mkdir -p "$LOCAL_DIR" "$PARTIAL_DIR"
+
+SSH_OPTS="-o StrictHostKeyChecking=no -i $SSH_KEY_PATH"
+
+echo "Searching remote $TYPE for: $QUERY"
+echo "Remote: $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"
+echo "Local : $LOCAL_DIR"
+echo "SSH key: $SSH_KEY_FILE"
+
+###
+# Fuzzy match (space-insensitive)
+###
+PATTERN="$(echo "$QUERY" | sed 's/ /.*?/g')"
+
+MATCHES=$(ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" \
+  "cd $REMOTE_DIR && ls -1" | grep -iE "$PATTERN" || true)
+
+if [[ -z "$MATCHES" ]]; then
+  echo "No matches found."
+  exit 2
+fi
+
+COUNT=$(echo "$MATCHES" | wc -l | tr -d ' ')
+
+if [[ "$COUNT" -gt 1 ]]; then
+  echo "Multiple matches found:"
+  echo "$MATCHES"
+  exit 3
+fi
+
+REMOTE_NAME="$MATCHES"
+
+echo "Found: $REMOTE_NAME"
+echo "Starting rsync (resumable)..."
+
+rsync -av \
+  --partial \
+  --append-verify \
+  --progress \
+  --temp-dir="$PARTIAL_DIR" \
+  -e "ssh $SSH_OPTS" \
+  "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/$REMOTE_NAME/" \
+  "$LOCAL_DIR/$REMOTE_NAME/"
