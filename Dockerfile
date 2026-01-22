@@ -9,8 +9,8 @@ RUN apk add --no-cache \
     findutils
 
 # Copy script
-COPY sshdl /usr/local/bin/sshdl
-RUN chmod +x /usr/local/bin/sshdl
+COPY sshdl /usr/local/bin/rsyncdl
+RUN chmod +x /usr/local/bin/rsyncdl
 
 # Default entrypoint
-ENTRYPOINT ["/usr/local/bin/sshdl"]
+ENTRYPOINT ["/usr/local/bin/rsyncdl"]
