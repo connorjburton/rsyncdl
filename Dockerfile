@@ -8,8 +8,7 @@ RUN apk add --no-cache \
     coreutils \
     findutils
 
-RUN addgroup -g 100 users && \
-    adduser -D -u 99 -G users nobody
+RUN adduser -D -u 99 -G users nobody
 
 # Copy script
 COPY rsyncdl /usr/local/bin/rsyncdl
