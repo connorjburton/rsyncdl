@@ -18,7 +18,6 @@ REMOTE_BASE="${REMOTE_BASE:-~/media}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-id_ed25519}"
 
 LOCAL_BASE="/data"
-PARTIAL_DIR="$LOCAL_BASE/.rsync-partial"
 
 # Allow override of allowed "types" (comma-separated). Default is "tv,movies"
 ALLOWED_TYPES="${ALLOWED_TYPES:-tv,movies}"
@@ -63,7 +62,7 @@ fi
 REMOTE_DIR="$REMOTE_BASE/$TYPE"
 LOCAL_DIR="$LOCAL_BASE/$TYPE"
 
-mkdir -p "$LOCAL_DIR" "$PARTIAL_DIR"
+mkdir -p "$LOCAL_DIR"
 
 SSH_OPTS="-o StrictHostKeyChecking=no -i $SSH_KEY_PATH"
 
@@ -101,7 +100,6 @@ rsync -av \
   --partial \
   --append-verify \
   --progress \
-  --temp-dir="$PARTIAL_DIR" \
   -e "ssh $SSH_OPTS" \
-  "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/$REMOTE_NAME/" \
-  "$LOCAL_DIR/$REMOTE_NAME/"
+  "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/$REMOTE_NAME" \
+  "$LOCAL_DIR/"
