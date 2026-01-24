@@ -12,10 +12,14 @@ QUERY="${2:-}"
 ###
 # Environment (with sane defaults)
 ###
-REMOTE_USER="">${REMOTE_USER:-user}"
-REMOTE_HOST="${REMOTE_HOST:-your.remote.host}"
-REMOTE_BASE="${REMOTE_BASE:-~/media}"
-SSH_KEY_FILE="${SSH_KEY_FILE:-id_ed25519}"
+REMOTE_USER="
+${REMOTE_USER:-user}"
+REMOTE_HOST="
+${REMOTE_HOST:-your.remote.host}"
+REMOTE_BASE="
+${REMOTE_BASE:-~/media}"
+SSH_KEY_FILE="
+${SSH_KEY_FILE:-id_ed25519}"
 
 LOCAL_BASE="/data"
 PARTIAL_DIR="$LOCAL_BASE/.rsync-partial"
@@ -29,8 +33,7 @@ ALLOWED_TYPES="${ALLOWED_TYPES// /}"
 # Validation
 ###
 if [[ -z "${TYPE}" || -z "${QUERY}" ]]; then
-  echo "Usage: sshdl {
-${ALLOWED_TYPES//,/|}} \"Title\""
+  echo "Usage: rsyncdl {${ALLOWED_TYPES//,/|}} \"Title\""
   exit 1
 fi
 
@@ -78,8 +81,7 @@ echo "SSH key: $SSH_KEY_FILE"
 ###
 PATTERN="$(echo "$QUERY" | sed 's/ /.*?/g')"
 
-MATCHES=$(ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" 
-  "cd $REMOTE_DIR && ls -1" | grep -iE "$PATTERN" || true)
+MATCHES=$(ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" "cd \"$REMOTE_DIR\" && ls -1" | grep -iE "$PATTERN" || true)
 
 if [[ -z "$MATCHES" ]]; then
   echo "No matches found."
