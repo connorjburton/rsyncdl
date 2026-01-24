@@ -12,7 +12,7 @@ QUERY="${2:-}"
 ###
 # Environment (with sane defaults)
 ###
-REMOTE_USER="${REMOTE_USER:-user}"
+REMOTE_USER="">${REMOTE_USER:-user}"
 REMOTE_HOST="${REMOTE_HOST:-your.remote.host}"
 REMOTE_BASE="${REMOTE_BASE:-~/media}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-id_ed25519}"
@@ -20,16 +20,34 @@ SSH_KEY_FILE="${SSH_KEY_FILE:-id_ed25519}"
 LOCAL_BASE="/data"
 PARTIAL_DIR="$LOCAL_BASE/.rsync-partial"
 
+# Allow override of allowed "types" (comma-separated). Default is "tv,movies"
+ALLOWED_TYPES="${ALLOWED_TYPES:-tv,movies}"
+# Remove any spaces the user might include
+ALLOWED_TYPES="${ALLOWED_TYPES// /}"
+
 ###
 # Validation
 ###
-if [[ -z "$TYPE" || -z "$QUERY" ]]; then
-  echo 'Usage: sshdl {tv|movies} "Title"'
+if [[ -z "${TYPE}" || -z "${QUERY}" ]]; then
+  echo "Usage: sshdl {
+${ALLOWED_TYPES//,/|}} \"Title\""
   exit 1
 fi
 
-if [[ "$TYPE" != "tv" && "$TYPE" != "movies" ]]; then
-  echo "First argument must be: tv or movies"
+# Build array from comma-separated ALLOWED_TYPES and perform case-insensitive match
+IFS=',' read -ra ALLOWED_ARR <<< "$ALLOWED_TYPES"
+TYPE_L="${TYPE,,}"
+found=0
+for v in "${ALLOWED_ARR[@]}"; do
+  v_l="${v,,}"
+  if [[ "$v_l" == "$TYPE_L" ]]; then
+    found=1
+    break
+  fi
+done
+
+if [[ "$found" -ne 1 ]]; then
+  echo "First argument must be one of: ${ALLOWED_TYPES//,/ }"
   exit 1
 fi
 
@@ -60,7 +78,7 @@ echo "SSH key: $SSH_KEY_FILE"
 ###
 PATTERN="$(echo "$QUERY" | sed 's/ /.*?/g')"
 
-MATCHES=$(ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" \
+MATCHES=$(ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" 
   "cd $REMOTE_DIR && ls -1" | grep -iE "$PATTERN" || true)
 
 if [[ -z "$MATCHES" ]]; then
