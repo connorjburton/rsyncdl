@@ -12,14 +12,10 @@ QUERY="${2:-}"
 ###
 # Environment (with sane defaults)
 ###
-REMOTE_USER="
-${REMOTE_USER:-user}"
-REMOTE_HOST="
-${REMOTE_HOST:-your.remote.host}"
-REMOTE_BASE="
-${REMOTE_BASE:-~/media}"
-SSH_KEY_FILE="
-${SSH_KEY_FILE:-id_ed25519}"
+REMOTE_USER="${REMOTE_USER:-user}"
+REMOTE_HOST="${REMOTE_HOST:-your.remote.host}"
+REMOTE_BASE="${REMOTE_BASE:-~/media}"
+SSH_KEY_FILE="${SSH_KEY_FILE:-id_ed25519}"
 
 LOCAL_BASE="/data"
 PARTIAL_DIR="$LOCAL_BASE/.rsync-partial"
