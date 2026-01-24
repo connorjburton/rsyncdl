@@ -1,0 +1,31 @@
+name: ShellCheck
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on rsyncdl
+        run: |
+          set -euo pipefail
+          # Ensure the tracked file exists in the repo
+          if ! git ls-files --error-unmatch rsyncdl >/dev/null 2>&1; then
+            echo "rsyncdl not tracked; nothing to lint."
+            exit 0
+          fi
+          # Lint only the rsyncdl file; follow sourced files with -x
+          shellcheck -x -S all rsyncdl
